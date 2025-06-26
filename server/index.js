@@ -1,25 +1,46 @@
+require('dotenv').config()
 const express = require('express')
-const app = express()
 const mongoose = require('mongoose')
 const cors = require('cors')
-const bodyParser = require('body-parser')
+
+const { jwtAuth } = require('./middleware/jwtAuth')
+
+
+const authRoutes = require('./routes/auth')
 const TodoListRoutes = require('./routes/api/Todolist')
 const CategoryListRoutes = require('./routes/api/Categorylist')
-const path = require('path')
-require('dotenv').config();
 
+const app = express()
+
+
+// Middleware
 app.use(cors())
-app.use(bodyParser.json())
+app.use(express.json()) // body-parser json intégré
 
-mongoose
-    .connect(process.env.MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-    })
-    .then(() => console.log('MongoDB database Connected...'))
-    .catch((err) => console.log(err))
+// Routes
+app.use('/api/auth', authRoutes) // route publique
+app.use('/api/todoList', jwtAuth, TodoListRoutes) // route sécurisée par jwtAuth
+app.use('/api/categoryList', jwtAuth, CategoryListRoutes) // route sécurisée par jwtAuth
 
-app.use('/api/todoList', TodoListRoutes)
-app.use('/api/categoryList', CategoryListRoutes)
+// Connexion MongoDB
+const PORT = process.env.PORT || 3000
+const MONGO_URI = process.env.MONGO_URI
 
-app.listen(process.env.PORT, () => console.log(`App listening at http://localhost:${process.env.PORT}`))
+if (!MONGO_URI) {
+  console.error("MONGO_URI non défini dans le .env !")
+  process.exit(1)
+}
+
+mongoose.connect(MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => {
+  console.log('MongoDB connecté')
+  app.listen(PORT, () => {
+    console.log(`Serveur démarré sur http://localhost:${PORT}`)
+  })
+})
+.catch(err => {
+  console.error('Erreur de connexion MongoDB :', err)
+})
