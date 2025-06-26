@@ -6,4 +6,4 @@ https://signoz.io/blog/mevn-stack-tutorial/
 delete .template
 
 # lauch serve
-npm run dev
+npm run dev      in powershell
